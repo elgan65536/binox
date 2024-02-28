@@ -17,7 +17,7 @@ pub enum BIR {
 }
 
 pub fn interpret(mut binox: Binox, line: String) -> (Binox, BIR) {
-    let words: Vec<&str> = line.split(' ').into_iter().collect();
+    let words: Vec<&str> = line.split(' ').collect();
     if words.is_empty() {
         return (binox, BIR::Error("you must enter text".into()));
     }
@@ -28,15 +28,15 @@ pub fn interpret(mut binox: Binox, line: String) -> (Binox, BIR) {
 {}
 
 Rules:
-Fill the board with {}'s and {}'s such that the following conditions are met:
-1. Each row and column must have the same number of {}'s as {}'s.
+Fill the board with {x}'s and {o}'s such that the following conditions are met:
+1. Each row and column must have the same number of {x}'s as {o}'s.
 2. No row or column may contain three consecutive identical symbols.
 3. Each row must be unique and each column must be unique.
 All cells must be filled. Each puzzle has exactly one solution.
 
 Commands:
-x (row) (column): sets an {} in the specified cell.
-o (row) (column): sets an {} in the specified cell.
+x (row) (column): sets an {x} in the specified cell.
+o (row) (column): sets an {o} in the specified cell.
 erase (row) (column): erases the specified cell.
 clear: resets the puzzle to its original state.
 verify: tells you whether any rules have been broken so far.
@@ -51,12 +51,8 @@ previous: saves progress on the current puzzle and moves to the previous puzzle.
 help: displays this list.
 exit: exits the program.",
                 "BINOX".bold().underline(),
-                "X".red().bold(),
-                "O".blue().bold(),
-                "X".red().bold(),
-                "O".blue().bold(),
-                "X".red().bold(),
-                "O".blue().bold()
+                x="X".red().bold(),
+                o="O".blue().bold(),
             );
             (binox, BIR::Normal(false))
         }
@@ -254,7 +250,7 @@ pub fn run_interpreter() {
                 println!("{}", binox);
             }
             BIR::Import(mut filename) => {
-                if !filename.contains(".") {
+                if !filename.contains('.') {
                     filename.push_str(".binox")
                 }
                 if let Ok(contents) = fs::read_to_string(filename.clone()) {

@@ -135,15 +135,11 @@ impl Binox {
                 break;
             }
         }
-
         binox
     }
 
-    fn set_x(&mut self, row: u8, col: u8) -> Result<(), &str> {
-        if row >= self.size {
-            return Err("attempted to set x out of range");
-        }
-        if col >= self.size {
+    fn set_x(&mut self, row: u8, col: u8) -> Result<(), &'static str> {
+        if row >= self.size || col >= self.size {
             return Err("attempted to set x out of range");
         }
         self.x_rows[row as usize].set_one(col).unwrap();
@@ -153,11 +149,8 @@ impl Binox {
         Ok(())
     }
 
-    fn set_o(&mut self, row: u8, col: u8) -> Result<(), &str> {
-        if row >= self.size {
-            return Err("attempted to set o out of range");
-        }
-        if col >= self.size {
+    fn set_o(&mut self, row: u8, col: u8) -> Result<(), &'static str> {
+        if row >= self.size || col >= self.size {
             return Err("attempted to set o out of range");
         }
         self.x_rows[row as usize].set_zero(col).unwrap();
@@ -167,11 +160,8 @@ impl Binox {
         Ok(())
     }
 
-    fn set_empty(&mut self, row: u8, col: u8) -> Result<(), &str> {
-        if row >= self.size {
-            return Err("attempted to set empty out of range");
-        }
-        if col >= self.size {
+    fn set_empty(&mut self, row: u8, col: u8) -> Result<(), &'static str> {
+        if row >= self.size || col >= self.size {
             return Err("attempted to set empty out of range");
         }
         self.x_rows[row as usize].set_zero(col).unwrap();
@@ -181,14 +171,11 @@ impl Binox {
         Ok(())
     }
 
-    pub fn set_cell(&mut self, row: u8, col: u8, cell: BinoxCell) -> Result<(), &str> {
-        if row >= self.size {
+    pub fn set_cell(&mut self, row: u8, col: u8, cell: BinoxCell) -> Result<(), &'static str> {
+        if row >= self.size || col >= self.size {
             return Err("attempted to set cell out of range");
         }
-        if col >= self.size {
-            return Err("attempted to set empty out of range");
-        }
-        if self.get_default(row, col).unwrap() {
+        if self.is_default(row, col).unwrap() {
             return Err("this cell cannot be modified.");
         }
         match cell {
@@ -198,11 +185,8 @@ impl Binox {
         }
     }
 
-    fn set_default(&mut self, row: u8, col: u8, value: bool) -> Result<(), &str> {
-        if row >= self.size {
-            return Err("attempted to set default out of range");
-        }
-        if col >= self.size {
+    fn set_default(&mut self, row: u8, col: u8, value: bool) -> Result<(), &'static str> {
+        if row >= self.size || col >= self.size {
             return Err("attempted to set default out of range");
         }
         self.default_rows[row as usize]
@@ -211,11 +195,8 @@ impl Binox {
         Ok(())
     }
 
-    fn get_cell(&self, row: u8, col: u8) -> Result<BinoxCell, &str> {
-        if row >= self.size {
-            return Err("attempted to get cell out of range");
-        }
-        if col >= self.size {
+    fn get_cell(&self, row: u8, col: u8) -> Result<BinoxCell, &'static str> {
+        if row >= self.size || col >= self.size {
             return Err("attempted to get cell out of range");
         }
         match (
@@ -228,60 +209,27 @@ impl Binox {
         }
     }
 
-    fn get_default(&self, row: u8, col: u8) -> Result<bool, &str> {
-        if row >= self.size {
-            return Err("attempted to get default out of range");
-        }
-        if col >= self.size {
+    fn is_default(&self, row: u8, col: u8) -> Result<bool, &'static str> {
+        if row >= self.size || col >= self.size {
             return Err("attempted to get default out of range");
         }
         Ok(self.default_rows[row as usize].get(col).unwrap())
     }
 
     pub fn is_valid_simple(&self) -> bool {
-        for row in &self.x_rows {
-            if !row.is_valid_simple() {
-                return false;
-            }
-        }
-        for row in &self.o_rows {
-            if !row.is_valid_simple() {
-                return false;
-            }
-        }
-        for row in &self.x_cols {
-            if !row.is_valid_simple() {
-                return false;
-            }
-        }
-        for row in &self.o_cols {
-            if !row.is_valid_simple() {
-                return false;
-            }
-        }
-        true
+        [&self.x_rows, &self.o_cols, &self.x_cols, &self.o_cols]
+            .iter()
+            .flat_map(|&x| x)
+            .all(|row| row.is_valid_simple())
     }
 
     pub fn is_valid(&self) -> bool {
-        for row in &self.x_rows {
-            if !row.is_valid() {
-                return false;
-            }
-        }
-        for row in &self.o_rows {
-            if !row.is_valid() {
-                return false;
-            }
-        }
-        for row in &self.x_cols {
-            if !row.is_valid() {
-                return false;
-            }
-        }
-        for row in &self.o_cols {
-            if !row.is_valid() {
-                return false;
-            }
+        if ![&self.x_rows, &self.o_cols, &self.x_cols, &self.o_cols]
+            .iter()
+            .flat_map(|&x| x)
+            .all(|row| row.is_valid())
+        {
+            return false;
         }
         let mut sorted_x_rows = self.x_rows.clone();
         let mut sorted_o_rows = self.o_rows.clone();
@@ -317,12 +265,8 @@ impl Binox {
     }
 
     pub fn is_full(&self) -> bool {
-        for i in 0..self.size {
-            if self.x_rows[i as usize].count + self.o_rows[i as usize].count != self.size {
-                return false;
-            }
-        }
-        true
+        (0..self.size)
+            .all(|i| self.x_rows[i as usize].count + self.o_rows[i as usize].count == self.size)
     }
 
     pub fn is_solved(&self) -> bool {
@@ -334,7 +278,7 @@ impl Binox {
         for row in 0..self.size {
             for col in 0..self.size {
                 let mut c = char::from(self.get_cell(row, col).unwrap());
-                match (c, self.get_default(row, col)) {
+                match (c, self.is_default(row, col)) {
                     ('X', Ok(false)) => c = 'x',
                     ('O', Ok(false)) => c = 'o',
                     (' ', _) => c = '.',
@@ -349,7 +293,7 @@ impl Binox {
     pub fn reset(&mut self) {
         for row in 0..self.size {
             for col in 0..self.size {
-                if !self.get_default(row, col).unwrap() {
+                if !self.is_default(row, col).unwrap() {
                     self.set_empty(row, col).unwrap();
                 }
             }
@@ -364,12 +308,14 @@ impl Binox {
                     let x_valid = self.is_valid();
                     self.set_o(row, col).unwrap();
                     let o_valid = self.is_valid();
-                    self.set_empty(row, col).unwrap();
                     match (x_valid, o_valid) {
                         (true, false) => self.set_x(row, col).unwrap(),
                         (false, true) => self.set_o(row, col).unwrap(),
-                        (false, false) => return PresolveResult::Bad,
-                        (true, true) => (),
+                        (false, false) => {
+                            self.set_empty(row, col).unwrap();
+                            return PresolveResult::Bad;
+                        }
+                        (true, true) => self.set_empty(row, col).unwrap(),
                     }
                 }
             }
@@ -378,20 +324,21 @@ impl Binox {
     }
 
     fn presolve_simple(&mut self) -> PresolveResult {
-        let mut clone = self.clone();
         for row in 0..self.size {
             for col in 0..self.size {
-                if clone.get_cell(row, col).unwrap() == BinoxCell::EMPTY {
-                    clone.set_x(row, col).unwrap();
-                    let x_valid = clone.is_valid_simple();
-                    clone.set_o(row, col).unwrap();
-                    let o_valid = clone.is_valid_simple();
-                    clone.set_empty(row, col).unwrap();
+                if self.get_cell(row, col).unwrap() == BinoxCell::EMPTY {
+                    self.set_x(row, col).unwrap();
+                    let x_valid = self.is_valid_simple();
+                    self.set_o(row, col).unwrap();
+                    let o_valid = self.is_valid_simple();
                     match (x_valid, o_valid) {
                         (true, false) => self.set_x(row, col).unwrap(),
                         (false, true) => self.set_o(row, col).unwrap(),
-                        (false, false) => return PresolveResult::Bad,
-                        (true, true) => (),
+                        (false, false) => {
+                            self.set_empty(row, col).unwrap();
+                            return PresolveResult::Bad;
+                        }
+                        (true, true) => self.set_empty(row, col).unwrap(),
                     }
                 }
             }
@@ -434,20 +381,11 @@ impl Binox {
     }
 
     pub fn generate(size: u8, perfect: bool, extras: usize) -> Result<Binox, &'static str> {
-        if size > 16 {
-            return Err("size must be at most 16");
-        }
-        if size < 4 {
-            return Err("size must be at least 4");
-        }
-        if size % 2 == 1 {
-            return Err("size must be even");
-        }
-        let mut binox = Binox::new(size).unwrap();
+        //phase 1 - add some symbols randomly to get started
+        let mut binox = Binox::new(size)?;
         let mut rows = (0u8..size).collect::<Vec<u8>>();
-        let mut cols = (0u8..size).collect::<Vec<u8>>();
+        let cols = (0u8..size).collect::<Vec<u8>>();
         rows.shuffle(&mut rand::thread_rng());
-        cols.shuffle(&mut rand::thread_rng());
         for i in 0..size {
             if rand::random() {
                 binox.set_x(rows[i as usize], cols[i as usize]).unwrap();
@@ -455,61 +393,60 @@ impl Binox {
                 binox.set_o(rows[i as usize], cols[i as usize]).unwrap();
             }
         }
-        //println!("first phase complete");
+
+        //phase 2 - continue adding symbols until there is only one solution
         loop {
             match binox.solve(true) {
                 Zero => return Err("something went wrong"),
                 One(_) => break,
                 Multiple(a, b) => {
-                    let diff = a.get_differences(b).unwrap();
+                    let diff = a.get_differences(b)?;
                     if diff.is_empty() {
                         break;
                     }
-                    let pair = diff[rand::thread_rng().gen_range(0..diff.len())];
+                    let pair = diff
+                        .get(rand::thread_rng().gen_range(0..diff.len()))
+                        .ok_or("something went wrong")?;
                     if rand::random() {
-                        binox.set_x(pair.0, pair.1).unwrap();
+                        binox.set_x(pair.0, pair.1)?;
                     } else {
-                        binox.set_o(pair.0, pair.1).unwrap();
+                        binox.set_o(pair.0, pair.1)?;
                     }
                 }
             }
-            //println!("cell added");
         }
-        //println!("second phase complete");
 
+        //phase 3 - remove symbols that are not needed to find the solution
         for row in 0..size {
             for col in 0..size {
-                if binox.get_cell(row, col).unwrap() != BinoxCell::EMPTY {
-                    let current_cell = binox.get_cell(row, col).unwrap();
+                if binox.get_cell(row, col)? != BinoxCell::EMPTY {
+                    let current_cell = binox.get_cell(row, col)?;
                     let mut clone = binox.clone();
-                    clone.set_empty(row, col).unwrap();
+                    clone.set_empty(row, col)?;
                     clone.presolve();
-                    if clone.get_cell(row, col).unwrap() == current_cell {
-                        binox.set_empty(row, col).unwrap();
-                        //println!("presolve subsitiution occurred");
+                    if clone.get_cell(row, col)? == current_cell {
+                        binox.set_empty(row, col)?;
                     }
                 }
             }
         }
-        //println!("third phase complete");
 
+        //phase 3 - if perfect generation is set, remove even more symbols that are not needed to find the solution
         if perfect {
             for row in 0..size {
                 for col in 0..size {
-                    if binox.get_cell(row, col).unwrap() != BinoxCell::EMPTY {
-                        let current_cell = binox.get_cell(row, col).unwrap();
-                        binox.set_empty(row, col).unwrap();
+                    if binox.get_cell(row, col)? != BinoxCell::EMPTY {
+                        let current_cell = binox.get_cell(row, col)?;
+                        binox.set_empty(row, col)?;
                         if let Multiple(..) = binox.solve(true) {
-                            binox.set_cell(row, col, current_cell).unwrap();
-                        } else {
-                            //println!("solve subsitiution occurred");
+                            binox.set_cell(row, col, current_cell)?;
                         }
                     }
                 }
             }
-            //println!("fourth phase complete");
         }
 
+        //phase 5 - add more cells if specified
         if extras > 0 {
             let mut clone = binox.clone();
             clone.presolve_simple();
@@ -527,10 +464,7 @@ impl Binox {
             };
 
             for (row, col) in empties.iter().take(num) {
-                binox
-                    .set_cell(*row, *col, clone.get_cell(*row, *col).unwrap())
-                    .unwrap();
-                //println!("extra cell added");
+                binox.set_cell(*row, *col, clone.get_cell(*row, *col).unwrap())?;
             }
         }
 
@@ -538,7 +472,7 @@ impl Binox {
         Ok(binox)
     }
 
-    fn get_differences(&self, other: Binox) -> Result<Vec<(u8, u8)>, &str> {
+    fn get_differences(&self, other: Binox) -> Result<Vec<(u8, u8)>, &'static str> {
         if self.size != other.size {
             return Err("must be same size");
         }
@@ -607,7 +541,7 @@ impl fmt::Display for Binox {
             write!(f, "{i:>2} |")?;
             for j in 0..self.size {
                 let mut c: ColoredString = self.get_cell(i, j).unwrap().into();
-                if self.get_default(i, j).unwrap() {
+                if self.is_default(i, j).unwrap() {
                     c = c.bold();
                 }
                 write!(f, " {} |", c)?;

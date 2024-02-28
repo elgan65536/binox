@@ -23,7 +23,7 @@ impl BinRow {
         })
     }
 
-    pub fn set_one(&mut self, position: u8) -> Result<(), &str> {
+    pub fn set_one(&mut self, position: u8) -> Result<(), &'static str> {
         if position >= self.size {
             return Err("attempted to set one out of range");
         }
@@ -34,7 +34,7 @@ impl BinRow {
         Ok(())
     }
 
-    pub fn set_zero(&mut self, position: u8) -> Result<(), &str> {
+    pub fn set_zero(&mut self, position: u8) -> Result<(), &'static str> {
         if position >= self.size {
             return Err("attempted to set zero out of range");
         }
@@ -45,7 +45,7 @@ impl BinRow {
         Ok(())
     }
 
-    pub fn set_bool(&mut self, position: u8, value: bool) -> Result<(), &str> {
+    pub fn set_bool(&mut self, position: u8, value: bool) -> Result<(), &'static str> {
         if value {
             self.set_one(position)
         } else {
@@ -53,7 +53,7 @@ impl BinRow {
         }
     }
 
-    pub fn get(&self, position: u8) -> Result<bool, &str> {
+    pub fn get(&self, position: u8) -> Result<bool, &'static str> {
         if position >= self.size {
             return Err("attempted to get out of range");
         }
